@@ -41,7 +41,6 @@ export class ParseCollection<T> {
       const query = new Parse.Query(this.path);
       query.subscribe().then((subscription) => {
         subscription.on('create', (data) => {
-          alert('created');
           observer.next(data);
         });
         subscription.on('delete', (data) => {
