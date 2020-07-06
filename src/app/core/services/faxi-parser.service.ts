@@ -38,18 +38,26 @@ export class ParseCollection<T> {
 
   valueChanges(): Observable<T[]> {
     return new Observable((observer) => {
+      const refreshData = async () => {
+        const data = await this.get();
+        observer.next(this.transformData(data));
+      };
+
       const query = new Parse.Query(this.path);
+      refreshData();
+
       query.subscribe().then((subscription) => {
-        subscription.on('create', (data) => {
-          observer.next(data);
-        });
-        subscription.on('delete', (data) => {
-          observer.next(data);
-        });
-        subscription.on('update', (data) => {
-          observer.next(data);
-        });
+        subscription.on('create', refreshData);
+        subscription.on('delete', refreshData);
+        subscription.on('update', refreshData);
       });
+    });
+  }
+
+  private transformData(data: any[]): any[] {
+    return data.map(d =>  {
+      const {attributes, id} = d;
+      return {...attributes, id};
     });
   }
 }

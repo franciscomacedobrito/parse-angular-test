@@ -10,16 +10,17 @@ import Parse from 'parse';
 })
 export class AppComponent {
   title = 'parse-angular-test';
+  private todos = [];
 
   constructor(private todoService: TodoService) {
     this.todoService.getTodos().subscribe(data => {
-      console.log(data);
+      this.todos = data;
     });
   }
 
   createTodo(): void {
     this.todoService.createTodo({name: faker.name.findName(), done: false}).then((data) => {
-        console.log(data);
+        console.log('created');
       }, (e) => {
         console.log(e);
       }
