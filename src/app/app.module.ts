@@ -1,6 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import Parse from 'parse';
+import * as Parse from 'parse';
 
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -30,6 +30,7 @@ import {MatCheckboxModule} from '@angular/material/checkbox';
 export class AppModule {
   constructor() {
     Parse.initialize(environment.appId);
+    // @ts-ignore
     Parse.serverURL = environment.host + '/parse';
   }
 }
