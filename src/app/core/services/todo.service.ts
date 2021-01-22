@@ -16,6 +16,10 @@ export class TodoService {
     return this.fps.collection<Todo>('todo').valueChanges();
   }
 
+  getSubTodos(todoId: string): Observable<any[]> {
+    return this.fps.collection<any>('todo/' + todoId + '/subTodos').valueChanges();
+  }
+
   getTodoById(id: string): Promise<Parse.Object<Todo>> {
     return this.fps.doc<Todo>('todo', id).get();
   }
@@ -32,11 +36,23 @@ export class TodoService {
     return this.fps.doc<Todo>('todo', id).set({done});
   }
 
+  updateSubTodo(id: string, subTodoId: string, done: boolean): Promise<Parse.Object<Todo>> {
+    return this.fps.doc<Todo>('todo/' + id + '/subTodos', subTodoId).set({done});
+  }
+
   deleteTodo(id: string): Promise<Parse.Object<Todo>> {
     return this.fps.doc<Todo>('todo', id).delete();
   }
 
+  deleteSubTodo(todoId: string, subTodoId): Promise<Parse.Object<Todo>> {
+    return this.fps.doc<Todo>('todo/' + todoId + '/subTodos', subTodoId).delete();
+  }
+
   createSubTodo(id: string, subTodo: Todo): Promise<Parse.Object<Todo>> {
     return this.fps.collection<Todo>('todo/' + id + '/subTodos').create(subTodo);
+  }
+
+  createStore(todoId: string, subTodoId: string, store: any): Promise<Parse.Object<Todo>> {
+    return this.fps.collection<Todo>('todo/' + todoId + '/subTodos/' + subTodoId + '/store').create(store);
   }
 }

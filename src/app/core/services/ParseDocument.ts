@@ -1,5 +1,4 @@
 import * as Parse from 'parse';
-import * as faker from 'faker';
 import {ParseCollection} from './ParseCollection';
 import {Observable} from 'rxjs';
 import { v4 as uuid } from 'uuid';
@@ -7,21 +6,21 @@ import { v4 as uuid } from 'uuid';
 export class ParseDocument<T> {
 
   public parserObject;
+  public parents: any[];
+  public readonly id: string;
   private readonly path: string;
-  private readonly id: string;
-  private readonly isNewDocument: boolean;
+  readonly isNewDocument: boolean;
 
-  constructor(path: string, id?: string, parentDocument?) {
+  constructor(path: string, id?: string) {
     this.path = path;
     this.isNewDocument = !id;
     this.id = this.isNewDocument ? uuid() : id;
+    this.parents = [];
+
     const parserObject = Parse.Object.extend(ParseDocument.getDocumentClass(this.path));
     this.parserObject = new parserObject();
 
-    if (parentDocument) {
-      parentDocument.set('name', faker.company.companyName());
-      this.parserObject.set('parent', parentDocument);
-    }
+    this.setParentDocuments();
 
     if (this.isNewDocument) {
       this.parserObject.objectId = this.id;
@@ -52,6 +51,8 @@ export class ParseDocument<T> {
       refreshData();
 
       query.subscribe().then((subscription) => {
+        subscription.on('create', refreshData);
+        subscription.on('delete', refreshData);
         subscription.on('update', refreshData);
       });
     });
@@ -73,6 +74,38 @@ export class ParseDocument<T> {
   }
 
   delete(): Promise<Parse.Object<T>> {
-    return this.parserObject.destroy();
+    const paths = this.path.split('/');
+    if (ParseCollection.isOdd(paths.length)) {
+      return this.parserObject.destroy();
+    } else {
+      throw new Error('the path is not odd please validate if it is a document or validate the slashes');
+    }
+
+  }
+
+  private setParentDocuments(): void {
+    const paths = this.path.split('/');
+    if (paths.length === 1) {
+      this.parserObject.set('path', this.path);
+    } else {
+      this.parserObject.set('path', paths.slice(0, paths.length).join('/'));
+    }
+
+    if (ParseCollection.isOdd(paths.length) && paths.length > 1) {
+      for (let i = paths.length - 2; i >= 0; i--){
+        if (ParseCollection.isOdd(i)) {
+          const parentClassString = paths[i - 1];
+          const parentObjectId = paths[i];
+
+          const parent = Parse.Object.extend(parentClassString);
+          const parentObject = new parent();
+
+          parentObject.id = parentObjectId;
+
+          this.parserObject.set(parentClassString, parentObject);
+          this.parents.push(parentObject);
+        }
+      }
+    }
   }
 }

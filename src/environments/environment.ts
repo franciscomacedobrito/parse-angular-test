@@ -5,7 +5,8 @@
 export const environment = {
   production: false,
   appId: 'APPLICATION_ID',
-  host: 'http://localhost:1337'
+  host: 'http://localhost:1337',
+  functionsHost: 'http://localhost:3000',
 };
 
 /*

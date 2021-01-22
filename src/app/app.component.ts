@@ -2,12 +2,13 @@ import {Component} from '@angular/core';
 import {TodoService} from './core/services/todo.service';
 import * as faker from 'faker';
 import * as Parse from 'parse';
-import {ParseService} from './core/services/parse.service';
+import {CloudTestService} from './core/services/cloud-test.service';
 
 export interface Todo {
   name: string;
   done: boolean;
   id?: string;
+  subTodos?: any;
 }
 
 @Component({
@@ -18,16 +19,26 @@ export interface Todo {
 export class AppComponent {
   title = 'parse-angular-test';
   todos: Todo[] = [];
+  private socket: any;
 
   constructor(private todoService: TodoService,
-              private fps: ParseService) {
+              private cloudTestService: CloudTestService) {
     this.todoService.getTodos().subscribe(data => {
+      data.forEach(todo => {
+        this.todoService.getSubTodos(todo.id).subscribe(subTodos => {
+          todo.subTodos = subTodos;
+        });
+      });
       this.todos = data;
     });
   }
 
   async createTodo(): Promise<Parse.Object<Todo>> {
     return this.todoService.createTodo({name: faker.name.findName(), done: false});
+  }
+
+  trackById(index, item): any {
+    return item.id;
   }
 
   deleteTodo(todo: Todo): void {
@@ -49,18 +60,22 @@ export class AppComponent {
     return this.todoService.createSubTodo(todo.id, {name: faker.company.companyName(), done: false});
   }
 
-  createUnconnectedDocument(): any {
-    const Post = Parse.Object.extend('post');
-    const Comment = Parse.Object.extend('comment');
-    const myComment = new Comment();
+  createStore(todo, subTodo: any): any {
+    return this.todoService.createStore(todo.id, subTodo.id, {name: faker.company.companyName(), done: false});
+  }
 
-    const post = new Post();
-    post.id = 'jKEUG5RQSQ';
+  deleteSubTodo(todo: Todo, subTodo: any): any {
+    return this.todoService.deleteSubTodo(todo.id, subTodo.id);
+  }
 
-    myComment.set('text', 'sasasasas');
-    myComment.set('parent', post);
+  toggleSubTodo(todo: Todo, subTodo: any): any {
+    subTodo.done = !subTodo.done;
+    this.todoService.updateSubTodo(todo.id, subTodo.id, subTodo.done);
+  }
 
-// This will save both myPost and myComment
-    myComment.save();
+  sendMessage(): any {
+    this.cloudTestService.getCalculateSomething().subscribe(data => {
+      console.log(data);
+    });
   }
 }

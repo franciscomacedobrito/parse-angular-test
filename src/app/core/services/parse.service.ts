@@ -7,11 +7,37 @@ import {ParseDocument} from './ParseDocument';
 })
 export class ParseService {
 
-  collection<T>(path: string, query?: any): ParseCollection<T> {
-    return new ParseCollection<T>(path, query);
+  constructor() {
   }
 
-  doc<T>(path: string, id: string): ParseDocument<T> {
-    return new ParseDocument<T>(path, id);
+  collections = new Map();
+  documents = new Map();
+
+  public collection<T>(path: string, query?: any): ParseCollection<T> {
+    const savedCollection = this.collections.get(path);
+    if (savedCollection) {
+      return savedCollection;
+    } else {
+      const newCollection = new ParseCollection<T>(path);
+      this.collections.set(path, newCollection);
+      return newCollection;
+    }
+    // return new ParseCollection<T>(path);
+  }
+
+  public doc<T>(path: string, id: string): ParseDocument<T> {
+    const savedDocument = this.documents.get(path + id);
+    if (savedDocument) {
+      return savedDocument;
+    } else {
+      const newDocument = new ParseDocument<T>(path, id);
+      if (newDocument.isNewDocument) {
+        this.documents.set(path + newDocument.parserObject.objectId, newDocument);
+      } else {
+        this.documents.set(path + newDocument.parserObject.id, newDocument);
+      }
+      return newDocument;
+    }
+    // return new ParseDocument<T>(path, id);
   }
 }
